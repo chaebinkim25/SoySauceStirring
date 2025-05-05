@@ -1,6 +1,8 @@
 import bpy
 import numpy as np
 
+
+
 for obj in bpy.data.objects:
     obj.hide_viewport = False
     obj.hide_render = False
@@ -12,21 +14,31 @@ for obj in bpy.data.objects:
 # Clear existing objects
 bpy.ops.object.delete()
 
-cameras = [obj for obj in bpy.data.objects if obj.type == 'CAMERA']
+for obj in bpy.data.objects:
+    if obj.type == 'CAMERA':
+        print("delete cam")
+        bpy.data.objects.remove(obj)
+    elif obj.type == 'LIGHT':
+        print("delete light")
+        bpy.data.objects.remove(obj, do_unlink=True)
+    elif obj.type == 'POINT':
+        print("delete point")
+        bpy.data.objects.remove(obj, do_unlink=True)
+    elif obj.type == 'SUN':
+        print("delete sun")
+        bpy.data.objects.remove(obj, do_unlink=True)
 
-for cam in cameras:
-    bpy.data.objects.remove(cam)
 
-
-cameras = [obj for obj in bpy.data.objects if obj.type == 'POINT']
-
-for cam in cameras:
-    bpy.data.objects.remove(cam)
-
-cameras = [obj for obj in bpy.data.objects if obj.type == 'SUN']
-
-for cam in cameras:
-    bpy.data.objects.remove(cam)
+world = bpy.context.scene.world
+if not world:
+    world = bpy.data.worlds.new("NewWorld")
+    bpy.context.scene.world = world
+    
+world.use_nodes = True
+bg_node = world.node_tree.nodes.get("Background")
+if bg_node:
+    bg_node.inputs["Color"].default_value = (1, 1, 1, 1);
+    
 
 
 # Create a cube and scale it into a long shape
@@ -51,9 +63,14 @@ bpy.context.view_layer.objects.active = cylinder
 bpy.ops.object.join()
 spoon = bpy.context.object
 
+mat_spoon = bpy.data.materials.new(name=("SoySource"))
+mat_spoon.diffuse_color = (0.3, 0.02, 0.02, 1)
+
+spoon.data.materials.append(mat_spoon)
 
 
-bpy.ops.mesh.primitive_cylinder_add(radius=0.4, depth=0.05, location=(0, 0, 0.125))
+
+bpy.ops.mesh.primitive_cylinder_add(radius=0.4, depth=0.05, location=(0, 0, 0.075))
 soySauce = bpy.context.object
 soySauce.name = "SoySauce"
 
@@ -99,6 +116,11 @@ pot_outer.scale = (1, 1, 1)
 pot_inner.hide_viewport = True
 pot_inner.hide_render = True
 
+mat_pot = bpy.data.materials.new(name=("Pot"))
+mat_pot.diffuse_color = (0.02, 0.0, 0.0, 1)
+
+pot_outer.data.materials.append(mat_pot)
+
 
 bpy.ops.mesh.primitive_cylinder_add(radius=1.8, depth=0.6, location=(0, 0, -1.5))
 soup = bpy.context.object
@@ -107,7 +129,7 @@ soup.name = "Soup"
 soup.scale = (1, 1, 1)
 
 mat_soup = bpy.data.materials.new(name=("Soup"))
-mat_soup.diffuse_color = (0.9, 0.9, 0.7, 1)
+mat_soup.diffuse_color = (0.9, 0.7, 0.5, 1)
 
 soup.data.materials.append(mat_soup)
 
@@ -127,7 +149,7 @@ def one_iteration():
     soySauce.keyframe_insert(data_path="hide_viewport", frame=frame)
     soySauce.keyframe_insert(data_path="hide_render", frame=frame)
     
-    frame += 7
+    frame += 1
     soySauce.scale = (0, 0, 0)
     soySauce.keyframe_insert(data_path="scale", frame=frame)    
     soySauce.hide_viewport = False
@@ -139,7 +161,6 @@ def one_iteration():
     soySauce.scale = (1, 1, 1)
     soySauce.keyframe_insert(data_path="scale", frame=frame)    
 
-    frame += 7
     bpy.context.scene.frame_set(frame)
     spoon.rotation_euler.x += 0.1
     spoon.keyframe_insert(data_path="rotation_euler", frame=frame)
@@ -219,13 +240,15 @@ def one_iteration():
 
     frame += 5
     spoon.rotation_euler.y += np.pi / 2
+    spoon.location.x = np.cos(0.4 * np.pi)
+    spoon.location.y = -np.sin(0.4 * np.pi)
     spoon.location.z = -1.5
     spoon.keyframe_insert(data_path="rotation_euler", frame=frame)
     spoon.keyframe_insert(data_path="location", frame=frame)
    
     mat_soup.keyframe_insert(data_path="diffuse_color", frame=frame)
     
-    for theta in np.arange(0, 2.1 * np.pi, 0.2 * np.pi):
+    for theta in np.arange(0.6 * np.pi, 2.1 * np.pi, 0.2 * np.pi):
         frame += 2
         spoon.location.x = np.cos(theta)
         spoon.location.y = -np.sin(theta)
@@ -249,7 +272,7 @@ def one_iteration():
     soySauce.hide_viewport = False
     soySauce.hide_render = False
     soySauce.scale = (0.8, 0.8, 0.8)
-    soySauce.location = (0, 0, 0.125)
+    soySauce.location = (0, 0, 0.075)
     soySauce.keyframe_insert(data_path="scale", frame=frame)    
     soySauce.keyframe_insert(data_path="location", frame=frame)    
     soySauce.keyframe_insert(data_path="hide_viewport", frame=frame)
@@ -266,13 +289,13 @@ def one_iteration():
     spoon.keyframe_insert(data_path="rotation_euler", frame=frame)
 
     
-    frame += 7
+    frame += 2
     spoon.location.z = 0
     spoon.keyframe_insert(data_path="location", frame=frame)
     soySauce.keyframe_insert(data_path="scale", frame=frame)    
 
 
-    frame += 7
+    frame += 2
     soySauce.scale = (0, 0, 0)
     soySauce.keyframe_insert(data_path="scale", frame=frame)    
     mat_soy.keyframe_insert(data_path="diffuse_color", frame=frame)
@@ -280,7 +303,7 @@ def one_iteration():
     soySpill.keyframe_insert(data_path="scale", frame=frame)
 
 
-    frame += 7
+    frame += 2
     mat_soy.diffuse_color = (0.08, 0.05, 0.03, 1)
     mat_soy.keyframe_insert(data_path="diffuse_color", frame=frame)
     soySpill.location = (1, -0.5 * 0.7, 0.05)
@@ -296,7 +319,7 @@ if animation:
     for _ in range(3):
         one_iteration()
 
-make_gif = False
+make_gif = True
 
 bpy.ops.object.camera_add(location=(5, -4, 4.5))
 camera = bpy.context.object
@@ -308,10 +331,15 @@ light = bpy.context.object
 light.name = "MyLight"
 
 light.data.energy = 1
-light.data.angle = radians(180)
+light.data.angle = np.pi
+
+bpy.context.scene.frame_start = 1
+bpy.context.scene.frame_end = frame 
+bpy.context.scene.frame_set(10)
+
 
 if make_gif:
+    bpy.context.scene.render.film_transparent = True
     bpy.context.scene.render.image_settings.file_format = 'PNG'
     bpy.context.scene.render.filepath = "//animation_frames/"
-    bpy.context.scene.frame_start = 1
-    bpy.context.scene.frame_end = 2
+    bpy.ops.render.render(animation=True)
