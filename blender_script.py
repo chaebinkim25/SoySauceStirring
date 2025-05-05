@@ -12,6 +12,23 @@ for obj in bpy.data.objects:
 # Clear existing objects
 bpy.ops.object.delete()
 
+cameras = [obj for obj in bpy.data.objects if obj.type == 'CAMERA']
+
+for cam in cameras:
+    bpy.data.objects.remove(cam)
+
+
+cameras = [obj for obj in bpy.data.objects if obj.type == 'POINT']
+
+for cam in cameras:
+    bpy.data.objects.remove(cam)
+
+cameras = [obj for obj in bpy.data.objects if obj.type == 'SUN']
+
+for cam in cameras:
+    bpy.data.objects.remove(cam)
+
+
 # Create a cube and scale it into a long shape
 bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
 long_cube = bpy.context.object
@@ -278,3 +295,23 @@ def one_iteration():
 if animation:
     for _ in range(3):
         one_iteration()
+
+make_gif = False
+
+bpy.ops.object.camera_add(location=(5, -4, 4.5))
+camera = bpy.context.object
+camera.rotation_euler=(np.pi*48/180, 0, np.pi*52/180)
+bpy.context.scene.camera = camera
+
+bpy.ops.object.light_add(type='SUN', location=(5, -5, 5))
+light = bpy.context.object
+light.name = "MyLight"
+
+light.data.energy = 1
+light.data.angle = radians(180)
+
+if make_gif:
+    bpy.context.scene.render.image_settings.file_format = 'PNG'
+    bpy.context.scene.render.filepath = "//animation_frames/"
+    bpy.context.scene.frame_start = 1
+    bpy.context.scene.frame_end = 2
